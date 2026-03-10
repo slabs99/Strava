@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Scrollable sheets */
+.sheet-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Glass morphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.glass-stat {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(32px) saturate(2);
+  -webkit-backdrop-filter: blur(32px) saturate(2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Bottom sheet animation */
+.sheet-enter {
+  transform: translateY(100%);
+}
+
+.sheet-enter-active {
+  transform: translateY(0);
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheet-exit {
+  transform: translateY(0);
+}
+
+.sheet-exit-active {
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* No scrollbar */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Drag handle */
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+/* Stat value text glow */
+.stat-value {
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.15);
+}
+
+/* Touch target minimum */
+button, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Input dark */
+.input-dark {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  outline: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.input-dark:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.input-dark::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Tab active */
+.tab-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* Strava orange */
+.strava-btn {
+  background: #fc4c02;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+/* Toggle switch */
+.toggle-bg {
+  transition: background 0.2s;
+}
