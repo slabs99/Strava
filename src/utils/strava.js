@@ -1,33 +1,18 @@
 /**
  * Strava OAuth + API utilities
- * Uses client_id + client_secret stored in sessionStorage (personal use)
+ * Client secret stays server-side — frontend only uses the public client ID
  */
 
 const STRAVA_AUTH_URL = 'https://www.strava.com/oauth/authorize'
-const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token'
 const STRAVA_API_URL = 'https://www.strava.com/api/v3'
 const SCOPE = 'activity:read_all'
 
 // ─── Session storage keys ─────────────────────────────────────────────────────
 const KEYS = {
-  clientId: 'stride_strava_client_id',
-  clientSecret: 'stride_strava_client_secret',
   accessToken: 'stride_strava_access_token',
   refreshToken: 'stride_strava_refresh_token',
   expiresAt: 'stride_strava_expires_at',
   athlete: 'stride_strava_athlete',
-}
-
-export function getCredentials() {
-  return {
-    clientId: sessionStorage.getItem(KEYS.clientId) || '',
-    clientSecret: sessionStorage.getItem(KEYS.clientSecret) || '',
-  }
-}
-
-export function saveCredentials(clientId, clientSecret) {
-  sessionStorage.setItem(KEYS.clientId, clientId)
-  sessionStorage.setItem(KEYS.clientSecret, clientSecret)
 }
 
 export function getAccessToken() {
@@ -59,46 +44,39 @@ export function clearStravaSession() {
 }
 
 // ─── OAuth redirect ────────────────────────────────────────────────────────────
-export function redirectToStravaAuth(clientId) {
+export function redirectToStravaAuth() {
+  const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID
+  if (!clientId) {
+    throw new Error('VITE_STRAVA_CLIENT_ID is not configured')
+  }
   const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname)
   const url = `${STRAVA_AUTH_URL}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&approval_prompt=auto&scope=${SCOPE}`
   window.location.href = url
 }
 
-// ─── Token exchange ────────────────────────────────────────────────────────────
-export async function exchangeCodeForToken(code, clientId, clientSecret) {
-  const res = await fetch(STRAVA_TOKEN_URL, {
+// ─── Token exchange (via serverless function) ─────────────────────────────────
+export async function exchangeCodeForToken(code) {
+  const res = await fetch('/api/strava/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      grant_type: 'authorization_code',
-    }),
+    body: JSON.stringify({ code }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || `Token exchange failed: ${res.status}`)
+    throw new Error(err.error || `Token exchange failed: ${res.status}`)
   }
   return res.json()
 }
 
-// ─── Refresh token ─────────────────────────────────────────────────────────────
+// ─── Refresh token (via serverless function) ──────────────────────────────────
 export async function refreshAccessToken() {
-  const { clientId, clientSecret } = getCredentials()
   const refreshToken = sessionStorage.getItem(KEYS.refreshToken)
-  if (!clientId || !clientSecret || !refreshToken) throw new Error('Missing credentials')
+  if (!refreshToken) throw new Error('Missing refresh token')
 
-  const res = await fetch(STRAVA_TOKEN_URL, {
+  const res = await fetch('/api/strava/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
-    }),
+    body: JSON.stringify({ refresh_token: refreshToken }),
   })
   if (!res.ok) throw new Error('Token refresh failed')
   const data = await res.json()

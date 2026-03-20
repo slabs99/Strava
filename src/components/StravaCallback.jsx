@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  getCredentials,
   exchangeCodeForToken,
   saveTokens,
   clearStravaSession,
@@ -8,7 +7,7 @@ import {
 
 /**
  * Handles the Strava OAuth redirect callback.
- * Exchanges the code for tokens and redirects back to app root.
+ * Exchanges the code for tokens via serverless function and redirects back to app root.
  */
 export default function StravaCallback() {
   const [status, setStatus] = useState('Connecting to Strava…')
@@ -33,15 +32,9 @@ export default function StravaCallback() {
       return
     }
 
-    const { clientId, clientSecret } = getCredentials()
-    if (!clientId || !clientSecret) {
-      setError('Session expired — credentials missing. Please reconnect.')
-      return
-    }
-
     try {
       setStatus('Exchanging token…')
-      const data = await exchangeCodeForToken(code, clientId, clientSecret)
+      const data = await exchangeCodeForToken(code)
       saveTokens(data)
       setStatus('Connected! Redirecting…')
       // Clean URL and go back to app

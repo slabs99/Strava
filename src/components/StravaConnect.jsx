@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  getCredentials,
-  saveCredentials,
   isTokenValid,
   getAthlete,
   fetchRecentActivities,
@@ -12,7 +10,7 @@ import {
 import { activityEmoji, activityTypeLabel, formatDistance, formatTime } from '../utils/format.js'
 
 const VIEWS = {
-  SETUP: 'setup',
+  CONNECT: 'connect',
   LOADING: 'loading',
   LIST: 'list',
   ERROR: 'error',
@@ -20,10 +18,9 @@ const VIEWS = {
 
 export default function StravaConnect({ onActivityLoaded, onBack }) {
   const isConnected = isTokenValid()
-  const [view, setView] = useState(isConnected ? VIEWS.LOADING : VIEWS.SETUP)
+  const [view, setView] = useState(isConnected ? VIEWS.LOADING : VIEWS.CONNECT)
   const [activities, setActivities] = useState([])
   const [error, setError] = useState('')
-  const [creds, setCreds] = useState(getCredentials)
 
   useEffect(() => {
     if (isConnected) {
@@ -44,18 +41,12 @@ export default function StravaConnect({ onActivityLoaded, onBack }) {
   }
 
   function handleConnect() {
-    if (!creds.clientId || !creds.clientSecret) {
-      setError('Please enter both Client ID and Client Secret.')
-      return
-    }
-    saveCredentials(creds.clientId, creds.clientSecret)
-    redirectToStravaAuth(creds.clientId)
+    redirectToStravaAuth()
   }
 
   function handleDisconnect() {
     clearStravaSession()
-    setCreds({ clientId: '', clientSecret: '' })
-    setView(VIEWS.SETUP)
+    setView(VIEWS.CONNECT)
     setActivities([])
   }
 
@@ -81,13 +72,34 @@ export default function StravaConnect({ onActivityLoaded, onBack }) {
         )}
       </div>
 
-      {view === VIEWS.SETUP && (
-        <SetupForm
-          creds={creds}
-          onChange={setCreds}
-          onConnect={handleConnect}
-          error={error}
-        />
+      {view === VIEWS.CONNECT && (
+        <div className="flex flex-col items-center py-8">
+          {/* Strava logo */}
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+            style={{ background: 'rgba(252,76,2,0.15)' }}
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="#FC4C02">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066z" />
+              <path d="M9.743 3.856l2.714 5.356H7.029z" opacity=".7" />
+              <path d="M9.743 3.856L4.596 13.86h2.713l2.434-4.648 2.714 5.356h2.716z" />
+            </svg>
+          </div>
+          <p className="text-white/50 text-sm mb-6 text-center">
+            Import your latest activities from Strava
+          </p>
+          <button
+            onClick={handleConnect}
+            className="strava-btn w-full h-12 text-sm flex items-center justify-center gap-2"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066z" />
+              <path d="M9.743 3.856l2.714 5.356H7.029z" opacity=".7" />
+              <path d="M9.743 3.856L4.596 13.86h2.713l2.434-4.648 2.714 5.356h2.716z" />
+            </svg>
+            Connect with Strava
+          </button>
+        </div>
       )}
 
       {view === VIEWS.LOADING && (
@@ -105,79 +117,13 @@ export default function StravaConnect({ onActivityLoaded, onBack }) {
         <div className="text-center py-8">
           <p className="text-red-400 text-sm mb-4">{error}</p>
           <button
-            onClick={() => setView(isTokenValid() ? VIEWS.LOADING : VIEWS.SETUP)}
+            onClick={() => setView(isTokenValid() ? VIEWS.LOADING : VIEWS.CONNECT)}
             className="text-white/60 underline text-sm"
           >
             Try again
           </button>
         </div>
       )}
-    </div>
-  )
-}
-
-// ─── Setup form ────────────────────────────────────────────────────────────────
-function SetupForm({ creds, onChange, onConnect, error }) {
-  return (
-    <div>
-      {/* Info banner */}
-      <div
-        className="rounded-xl p-4 mb-5 text-sm"
-        style={{ background: 'rgba(252,76,2,0.12)', border: '1px solid rgba(252,76,2,0.3)' }}
-      >
-        <p className="text-white/80 leading-relaxed">
-          To import real Strava data, you need a free Strava API app.
-        </p>
-        <ol className="text-white/50 text-xs mt-2 space-y-1 list-decimal list-inside">
-          <li>Go to <span className="text-orange-400">strava.com/settings/api</span></li>
-          <li>Create an app (name it anything)</li>
-          <li>Set Authorization Callback Domain to <span className="text-white/70">localhost</span></li>
-          <li>Copy your Client ID and Client Secret below</li>
-        </ol>
-      </div>
-
-      {error && (
-        <p className="text-red-400 text-sm mb-4 bg-red-400/10 rounded-xl px-4 py-3">{error}</p>
-      )}
-
-      <div className="flex flex-col gap-3 mb-5">
-        <div>
-          <label className="text-white/50 text-xs font-medium mb-1.5 block">Client ID</label>
-          <input
-            className="input-dark"
-            type="text"
-            inputMode="numeric"
-            placeholder="e.g. 12345"
-            value={creds.clientId}
-            onChange={(e) => onChange((p) => ({ ...p, clientId: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="text-white/50 text-xs font-medium mb-1.5 block">Client Secret</label>
-          <input
-            className="input-dark"
-            type="password"
-            placeholder="Your app's client secret"
-            value={creds.clientSecret}
-            onChange={(e) => onChange((p) => ({ ...p, clientSecret: e.target.value }))}
-          />
-          <p className="text-white/25 text-[11px] mt-1.5">
-            Stored only in this browser session — never sent anywhere except Strava.
-          </p>
-        </div>
-      </div>
-
-      <button
-        onClick={onConnect}
-        className="strava-btn w-full h-12 text-sm flex items-center justify-center gap-2"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-          <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066z" />
-          <path d="M9.743 3.856l2.714 5.356H7.029z" opacity=".7" />
-          <path d="M9.743 3.856L4.596 13.86h2.713l2.434-4.648 2.714 5.356h2.716z" />
-        </svg>
-        Connect with Strava
-      </button>
     </div>
   )
 }
